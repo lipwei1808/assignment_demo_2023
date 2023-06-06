@@ -12,13 +12,42 @@ type IMServiceImpl struct{}
 
 func (s *IMServiceImpl) Send(ctx context.Context, req *rpc.SendRequest) (*rpc.SendResponse, error) {
 	resp := rpc.NewSendResponse()
-	resp.Code, resp.Msg = areYouLucky()
+
+	message := &Message{
+		Sender:    req.Message.GetSender(),
+		Message:   req.Message.GetText(),
+		Timestamp: req.Message.GetSendTime(),
+	}
+
+	roomId := req.Message.GetChat()
+	err := redisClient.SendMessage(ctx, roomId, message)
+
+	if err != nil {
+		return nil, err
+	}
+
+	resp.Code, resp.Msg = 0, "success"
+
 	return resp, nil
 }
 
 func (s *IMServiceImpl) Pull(ctx context.Context, req *rpc.PullRequest) (*rpc.PullResponse, error) {
 	resp := rpc.NewPullResponse()
-	resp.Code, resp.Msg = areYouLucky()
+
+	roomId := req.GetChat()
+	reverse := req.GetReverse()
+	cursor := req.GetCursor()
+	limit := int64(req.GetLimit())
+
+	end := limit + cursor
+
+	data, err := redisClient.GetMessages(ctx, roomId, cursor, end, reverse)
+	if err != nil {
+		return nil, err
+	}
+
+	resp.Code, resp.Msg = 0, "success"
+
 	return resp, nil
 }
 
