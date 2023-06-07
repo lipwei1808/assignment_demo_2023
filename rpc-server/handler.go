@@ -2,7 +2,11 @@ package main
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"math/rand"
+	"sort"
+	"strings"
 
 	"github.com/TikTokTechImmersion/assignment_demo_2023/rpc-server/kitex_gen/rpc"
 )
@@ -19,7 +23,13 @@ func (s *IMServiceImpl) Send(ctx context.Context, req *rpc.SendRequest) (*rpc.Se
 		Timestamp: req.Message.GetSendTime(),
 	}
 
-	roomId := req.Message.GetChat()
+	roomId, e := getRoomId(req.Message.GetChat())
+	fmt.Printf("Inside RPC Server, sending message in %q\n", roomId)
+	if e != nil {
+		fmt.Println("Error in sending messages")
+		return nil, e
+	}
+
 	err := redisClient.SendMessage(ctx, roomId, message)
 
 	if err != nil {
@@ -34,7 +44,10 @@ func (s *IMServiceImpl) Send(ctx context.Context, req *rpc.SendRequest) (*rpc.Se
 func (s *IMServiceImpl) Pull(ctx context.Context, req *rpc.PullRequest) (*rpc.PullResponse, error) {
 	resp := rpc.NewPullResponse()
 
-	roomId := req.GetChat()
+	roomId, err := getRoomId(req.GetChat())
+	if err != nil {
+		return nil, err
+	}
 	reverse := req.GetReverse()
 	cursor := req.GetCursor()
 	limit := int64(req.GetLimit())
@@ -46,8 +59,31 @@ func (s *IMServiceImpl) Pull(ctx context.Context, req *rpc.PullRequest) (*rpc.Pu
 		return nil, err
 	}
 
-	resp.Code, resp.Msg = 0, "success"
+	var counter int64 = 0
+	var hasMore bool
+	var nextCursor int64
+	var messages []*rpc.Message
+	for _, row := range data {
+		if counter == limit {
+			hasMore = true
+			nextCursor = end
+			break
+		}
 
+		temp := &rpc.Message{
+			Chat:     roomId,
+			Text:     row.Message,
+			Sender:   row.Sender,
+			SendTime: row.Timestamp,
+		}
+		messages = append(messages, temp)
+		counter += 1
+	}
+
+	resp.Code, resp.Msg = 0, "success"
+	resp.HasMore = &hasMore
+	resp.Messages = messages
+	resp.NextCursor = &nextCursor
 	return resp, nil
 }
 
@@ -57,4 +93,13 @@ func areYouLucky() (int32, string) {
 	} else {
 		return 500, "oops"
 	}
+}
+
+func getRoomId(chat string) (string, error) {
+	persons := strings.Split(chat, ":")
+	if len(persons) != 2 {
+		return "", errors.New("invalid id")
+	}
+	sort.Strings(persons)
+	return persons[0] + ":" + persons[1], nil
 }
