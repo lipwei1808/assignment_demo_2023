@@ -10,12 +10,14 @@ message Message {
   string text = 2;     // message text content
   string sender = 3;   // sender identifier of the message
   int64 send_time = 4; // unit: microseconds
+  string header = 5;
 }
 
 message SendRequest {
   string chat = 1;     // format "<member1>:<member2>", e.g. "john:doe"
   string text = 2;     // message text content to be sent
   string sender = 3;   // sender identifier
+  string header = 4;
 }
 
 message SendResponse {} // return a reasonable HTTP status code if error occurs

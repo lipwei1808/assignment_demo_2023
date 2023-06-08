@@ -15,6 +15,7 @@ type Message struct {
 	Sender    string `json:"sender"`
 	Message   string `json:"message"`
 	Timestamp int64  `json:"timestamp"`
+	Header    string `json:"header"`
 }
 
 func (c *RedisClient) InitRedisClient(ctx context.Context) error {

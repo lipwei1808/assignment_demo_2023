@@ -50,9 +50,11 @@ func sendMessage(ctx context.Context, c *app.RequestContext) {
 	}
 	resp, err := cli.Send(ctx, &rpc.SendRequest{
 		Message: &rpc.Message{
-			Chat:   req.Chat,
-			Text:   req.Text,
-			Sender: req.Sender,
+			Chat:     req.Chat,
+			Text:     req.Text,
+			Sender:   req.Sender,
+			Header:   req.Header,
+			SendTime: time.Now().Unix(),
 		},
 	})
 	if err != nil {
@@ -92,6 +94,7 @@ func pullMessage(ctx context.Context, c *app.RequestContext) {
 			Text:     msg.Text,
 			Sender:   msg.Sender,
 			SendTime: msg.SendTime,
+			Header:   msg.Header,
 		})
 	}
 	c.JSON(consts.StatusOK, &api.PullResponse{

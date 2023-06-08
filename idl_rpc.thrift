@@ -6,6 +6,7 @@ struct Message {
     2: string Text   // message text content
     3: string Sender // sender identifier
     4: i64 SendTime  // unit: microseconds
+    5: required string Header
 }
 
 struct SendRequest {

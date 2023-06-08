@@ -14,6 +14,7 @@ type Message struct {
 	Text     string `thrift:"Text,2" frugal:"2,default,string" json:"Text"`
 	Sender   string `thrift:"Sender,3" frugal:"3,default,string" json:"Sender"`
 	SendTime int64  `thrift:"SendTime,4" frugal:"4,default,i64" json:"SendTime"`
+	Header   string `thrift:"Header,5,required" frugal:"5,required,string" json:"Header"`
 }
 
 func NewMessage() *Message {
@@ -39,6 +40,10 @@ func (p *Message) GetSender() (v string) {
 func (p *Message) GetSendTime() (v int64) {
 	return p.SendTime
 }
+
+func (p *Message) GetHeader() (v string) {
+	return p.Header
+}
 func (p *Message) SetChat(val string) {
 	p.Chat = val
 }
@@ -51,18 +56,23 @@ func (p *Message) SetSender(val string) {
 func (p *Message) SetSendTime(val int64) {
 	p.SendTime = val
 }
+func (p *Message) SetHeader(val string) {
+	p.Header = val
+}
 
 var fieldIDToName_Message = map[int16]string{
 	1: "Chat",
 	2: "Text",
 	3: "Sender",
 	4: "SendTime",
+	5: "Header",
 }
 
 func (p *Message) Read(iprot thrift.TProtocol) (err error) {
 
 	var fieldTypeId thrift.TType
 	var fieldId int16
+	var issetHeader bool = false
 
 	if _, err = iprot.ReadStructBegin(); err != nil {
 		goto ReadStructBeginError
@@ -118,6 +128,17 @@ func (p *Message) Read(iprot thrift.TProtocol) (err error) {
 					goto SkipFieldError
 				}
 			}
+		case 5:
+			if fieldTypeId == thrift.STRING {
+				if err = p.ReadField5(iprot); err != nil {
+					goto ReadFieldError
+				}
+				issetHeader = true
+			} else {
+				if err = iprot.Skip(fieldTypeId); err != nil {
+					goto SkipFieldError
+				}
+			}
 		default:
 			if err = iprot.Skip(fieldTypeId); err != nil {
 				goto SkipFieldError
@@ -132,6 +153,10 @@ func (p *Message) Read(iprot thrift.TProtocol) (err error) {
 		goto ReadStructEndError
 	}
 
+	if !issetHeader {
+		fieldId = 5
+		goto RequiredFieldNotSetError
+	}
 	return nil
 ReadStructBeginError:
 	return thrift.PrependError(fmt.Sprintf("%T read struct begin error: ", p), err)
@@ -146,6 +171,8 @@ ReadFieldEndError:
 	return thrift.PrependError(fmt.Sprintf("%T read field end error", p), err)
 ReadStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T read struct end error: ", p), err)
+RequiredFieldNotSetError:
+	return thrift.NewTProtocolExceptionWithType(thrift.INVALID_DATA, fmt.Errorf("required field %s is not set", fieldIDToName_Message[fieldId]))
 }
 
 func (p *Message) ReadField1(iprot thrift.TProtocol) error {
@@ -184,6 +211,15 @@ func (p *Message) ReadField4(iprot thrift.TProtocol) error {
 	return nil
 }
 
+func (p *Message) ReadField5(iprot thrift.TProtocol) error {
+	if v, err := iprot.ReadString(); err != nil {
+		return err
+	} else {
+		p.Header = v
+	}
+	return nil
+}
+
 func (p *Message) Write(oprot thrift.TProtocol) (err error) {
 	var fieldId int16
 	if err = oprot.WriteStructBegin("Message"); err != nil {
@@ -204,6 +240,10 @@ func (p *Message) Write(oprot thrift.TProtocol) (err error) {
 		}
 		if err = p.writeField4(oprot); err != nil {
 			fieldId = 4
+			goto WriteFieldError
+		}
+		if err = p.writeField5(oprot); err != nil {
+			fieldId = 5
 			goto WriteFieldError
 		}
 
@@ -293,6 +333,23 @@ WriteFieldEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write field 4 end error: ", p), err)
 }
 
+func (p *Message) writeField5(oprot thrift.TProtocol) (err error) {
+	if err = oprot.WriteFieldBegin("Header", thrift.STRING, 5); err != nil {
+		goto WriteFieldBeginError
+	}
+	if err := oprot.WriteString(p.Header); err != nil {
+		return err
+	}
+	if err = oprot.WriteFieldEnd(); err != nil {
+		goto WriteFieldEndError
+	}
+	return nil
+WriteFieldBeginError:
+	return thrift.PrependError(fmt.Sprintf("%T write field 5 begin error: ", p), err)
+WriteFieldEndError:
+	return thrift.PrependError(fmt.Sprintf("%T write field 5 end error: ", p), err)
+}
+
 func (p *Message) String() string {
 	if p == nil {
 		return "<nil>"
@@ -316,6 +373,9 @@ func (p *Message) DeepEqual(ano *Message) bool {
 		return false
 	}
 	if !p.Field4DeepEqual(ano.SendTime) {
+		return false
+	}
+	if !p.Field5DeepEqual(ano.Header) {
 		return false
 	}
 	return true
@@ -345,6 +405,13 @@ func (p *Message) Field3DeepEqual(src string) bool {
 func (p *Message) Field4DeepEqual(src int64) bool {
 
 	if p.SendTime != src {
+		return false
+	}
+	return true
+}
+func (p *Message) Field5DeepEqual(src string) bool {
+
+	if strings.Compare(p.Header, src) != 0 {
 		return false
 	}
 	return true

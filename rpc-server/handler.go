@@ -21,6 +21,7 @@ func (s *IMServiceImpl) Send(ctx context.Context, req *rpc.SendRequest) (*rpc.Se
 		Sender:    req.Message.GetSender(),
 		Message:   req.Message.GetText(),
 		Timestamp: req.Message.GetSendTime(),
+		Header:    req.Message.GetHeader(),
 	}
 
 	roomId, e := getRoomId(req.Message.GetChat())
@@ -69,12 +70,13 @@ func (s *IMServiceImpl) Pull(ctx context.Context, req *rpc.PullRequest) (*rpc.Pu
 			nextCursor = end
 			break
 		}
-
+		fmt.Println(row.Message, row.Sender, row.Timestamp, row.Header)
 		temp := &rpc.Message{
 			Chat:     roomId,
 			Text:     row.Message,
 			Sender:   row.Sender,
 			SendTime: row.Timestamp,
+			Header:   row.Header,
 		}
 		messages = append(messages, temp)
 		counter += 1
